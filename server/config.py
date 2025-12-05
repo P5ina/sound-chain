@@ -26,6 +26,7 @@ TICK_RATE = 0.1  # 10 updates/sec
 SAMPLE_RATE = 44100
 CHUNK_SIZE = 4096
 FFT_WINDOW = 2048
+AUDIO_DEVICE = 2  # Fifine microphone (use None for default, or device index)
 
 # GPIO (Raspberry Pi buzzer)
 BUZZER_PIN = 18
