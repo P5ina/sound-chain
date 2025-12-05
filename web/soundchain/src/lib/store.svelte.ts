@@ -12,6 +12,7 @@ import type {
 } from './types';
 import { wsClient } from './websocket';
 import { toneGenerator } from './tone';
+import { getOrCreateDeviceId } from './deviceId';
 
 // Connection state
 let isConnected = $state(false);
@@ -218,7 +219,8 @@ async function connect(name: string, host: string): Promise<void> {
 
 		await wsClient.connect(host);
 		isConnected = true;
-		wsClient.join(name);
+		const deviceId = getOrCreateDeviceId();
+		wsClient.join(name, deviceId);
 	} catch {
 		connectionError = 'Failed to connect to server';
 		isConnected = false;

@@ -83,8 +83,8 @@ export class WebSocketClient {
 	}
 
 	// Message sending helpers
-	join(name: string): void {
-		this.send({ type: 'join', name });
+	join(name: string, deviceId: string): void {
+		this.send({ type: 'join', name, device_id: deviceId });
 	}
 
 	becomeMiner(): void {

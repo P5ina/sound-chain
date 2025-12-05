@@ -88,7 +88,8 @@ class AppState: ObservableObject {
 
     func join(name: String) {
         userName = name
-        webSocket?.join(name: name)
+        let deviceId = DeviceID.getOrCreate()
+        webSocket?.join(name: name, deviceId: deviceId)
     }
 
     func becomeMiner() {

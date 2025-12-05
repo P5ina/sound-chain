@@ -1,11 +1,16 @@
 import hashlib
 import json
+import os
 import time
 import uuid
 from dataclasses import dataclass, field, asdict
 from typing import Optional
 
 from config import INITIAL_REWARD, HALVING_INTERVAL, MIN_FEE, INITIAL_BALANCE
+
+# Path for persisting user data
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+USERS_FILE = os.path.join(DATA_DIR, "users.json")
 
 
 @dataclass
@@ -87,6 +92,7 @@ class User:
     user_id: str
     name: str
     wallet: Wallet
+    device_id: Optional[str] = None
     is_miner: bool = False
     miner_slot: Optional[int] = None
     frequency: Optional[int] = None
@@ -103,15 +109,26 @@ class User:
             data["frequency"] = self.frequency
         return data
 
+    def to_persist_dict(self) -> dict:
+        """Data to persist (excludes transient state like miner status)"""
+        return {
+            "user_id": self.user_id,
+            "name": self.name,
+            "device_id": self.device_id,
+            "balance": self.wallet.balance,
+        }
+
 
 class Blockchain:
     def __init__(self):
         self.chain: list[Block] = []
         self.pending_transactions: list[Transaction] = []
-        self.users: dict[str, User] = {}
+        self.users: dict[str, User] = {}  # Active users by user_id
+        self.persisted_users: dict[str, dict] = {}  # Persisted users by device_id
         self.miner_slots: list[Optional[str]] = [None] * 4
         self.block_start_time: float = time.time()
         self._create_genesis_block()
+        self._load_persisted_users()
 
     def _create_genesis_block(self):
         genesis = Block(
@@ -123,6 +140,33 @@ class Blockchain:
             total_reward=0.0,
         )
         self.chain.append(genesis)
+
+    def _load_persisted_users(self):
+        """Load persisted user data from disk"""
+        if os.path.exists(USERS_FILE):
+            try:
+                with open(USERS_FILE, "r") as f:
+                    data = json.load(f)
+                    self.persisted_users = {u["device_id"]: u for u in data if u.get("device_id")}
+                    print(f"Loaded {len(self.persisted_users)} persisted users")
+            except (json.JSONDecodeError, IOError) as e:
+                print(f"Error loading users: {e}")
+                self.persisted_users = {}
+
+    def _save_persisted_users(self):
+        """Save user data to disk"""
+        os.makedirs(DATA_DIR, exist_ok=True)
+        try:
+            # Merge active users into persisted data
+            for user in self.users.values():
+                if user.device_id:
+                    self.persisted_users[user.device_id] = user.to_persist_dict()
+
+            data = list(self.persisted_users.values())
+            with open(USERS_FILE, "w") as f:
+                json.dump(data, f, indent=2)
+        except IOError as e:
+            print(f"Error saving users: {e}")
 
     @property
     def last_block(self) -> Block:
@@ -154,11 +198,31 @@ class Blockchain:
         # Scale to 0.05-0.95 range (full range, very challenging)
         return 0.05 + value * 0.9
 
-    def create_user(self, name: str) -> User:
+    def create_user(self, name: str, device_id: Optional[str] = None) -> User:
+        """Create or restore a user. If device_id is provided and exists, restore the user."""
+        # Check if we have persisted data for this device
+        if device_id and device_id in self.persisted_users:
+            persisted = self.persisted_users[device_id]
+            user_id = persisted["user_id"]
+            balance = persisted.get("balance", INITIAL_BALANCE)
+            # Update name if changed
+            wallet = Wallet(address=user_id, balance=balance)
+            user = User(user_id=user_id, name=name, wallet=wallet, device_id=device_id)
+            self.users[user_id] = user
+            print(f"Restored user {name} (device: {device_id[:8]}...) with balance {balance}")
+            return user
+
+        # Create new user
         user_id = str(uuid.uuid4())
         wallet = Wallet(address=user_id, balance=INITIAL_BALANCE)
-        user = User(user_id=user_id, name=name, wallet=wallet)
+        user = User(user_id=user_id, name=name, wallet=wallet, device_id=device_id)
         self.users[user_id] = user
+
+        # Persist immediately if we have a device_id
+        if device_id:
+            self._save_persisted_users()
+            print(f"Created new user {name} (device: {device_id[:8]}...)")
+
         return user
 
     def get_user(self, user_id: str) -> Optional[User]:
@@ -202,6 +266,8 @@ class Blockchain:
 
     def remove_user(self, user_id: str):
         if user_id in self.users:
+            # Save user data before removing
+            self._save_persisted_users()
             self.release_miner_slot(user_id)
             del self.users[user_id]
 
@@ -277,6 +343,9 @@ class Blockchain:
         self.chain.append(block)
         self.pending_transactions = []
         self.block_start_time = time.time()
+
+        # Persist user balances after mining
+        self._save_persisted_users()
 
         return block
 

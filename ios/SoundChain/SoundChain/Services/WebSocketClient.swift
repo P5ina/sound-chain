@@ -77,8 +77,8 @@ class WebSocketClient: NSObject {
         }
     }
 
-    func join(name: String) {
-        send(["type": "join", "name": name])
+    func join(name: String, deviceId: String) {
+        send(["type": "join", "name": name, "device_id": deviceId])
     }
 
     func becomeMiner() {

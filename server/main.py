@@ -68,7 +68,8 @@ class SoundChainServer:
 
     async def handle_join(self, ws: WebSocketServerProtocol, data: dict) -> Optional[str]:
         name = data.get("name", "Anonymous")
-        user = self.blockchain.create_user(name)
+        device_id = data.get("device_id")  # Optional device ID for authentication
+        user = self.blockchain.create_user(name, device_id=device_id)
         self.connections[user.user_id] = ws
 
         await self.send_to_user(
