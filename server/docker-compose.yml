@@ -1,0 +1,18 @@
+services:
+  soundchain:
+    build: .
+    container_name: soundchain-server
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    # Required for GPIO (buzzer) and audio (microphone) access
+    privileged: true
+    devices:
+      - /dev/snd:/dev/snd        # Audio devices
+      - /dev/gpiomem:/dev/gpiomem # GPIO access
+    volumes:
+      - /run/udev:/run/udev:ro   # For device detection
+    environment:
+      - PYTHONUNBUFFERED=1
+    group_add:
+      - audio  # For microphone access
