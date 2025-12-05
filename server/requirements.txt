@@ -2,4 +2,4 @@ websockets>=12.0
 numpy>=1.26.0
 scipy>=1.11.0
 sounddevice>=0.4.6
-rpi-lgpio>=0.4  # GPIO for Raspberry Pi 5
+# rpi-lgpio installed separately on Raspberry Pi for GPIO/buzzer
