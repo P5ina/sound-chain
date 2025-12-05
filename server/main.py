@@ -150,7 +150,9 @@ class SoundChainServer:
         # Get active miners mapping (user_id -> frequency)
         active_miners = {m.user_id: m.frequency for m in miners if m.frequency}
         contributions = self.audio.get_contributions(active_miners)
-        current_level = self.audio.get_total_level()
+
+        # Current level is sum of active miners' contributions
+        current_level = sum(contributions.values())
 
         status = {
             "type": "mining_status",
@@ -165,7 +167,12 @@ class SoundChainServer:
             await self.send_to_user(miner.user_id, status)
 
     def check_block_mined(self) -> bool:
-        current = self.audio.get_total_level()
+        miners = self.blockchain.get_miners()
+        if not miners:
+            return False
+        active_miners = {m.user_id: m.frequency for m in miners if m.frequency}
+        contributions = self.audio.get_contributions(active_miners)
+        current = sum(contributions.values())
         return abs(current - self.target) <= self.tolerance
 
     def adjust_difficulty(self, block_time: float):
