@@ -84,7 +84,13 @@ class AudioAnalyzer:
                     rms = np.sqrt(np.mean(mono ** 2))
                     peak = np.max(np.abs(mono))
                     contrib_str = " ".join([f"{f}Hz:{v:.2f}" for f, v in self.contributions.items()])
-                    print(f"[Audio] RMS:{rms:.4f} Peak:{peak:.4f} | {contrib_str} | Total:{self.total_level:.2f}")
+
+                    # Find top 3 frequency peaks for debugging
+                    top_indices = np.argsort(fft_result)[-3:][::-1]
+                    top_peaks = [(int(freqs[i]), float(fft_result[i])) for i in top_indices]
+                    peaks_str = " ".join([f"{f}Hz={p:.0f}" for f, p in top_peaks])
+
+                    print(f"[Audio] RMS:{rms:.4f} Peak:{peak:.4f} | {contrib_str} | FFT peaks: {peaks_str}")
 
             except queue.Empty:
                 continue
@@ -117,8 +123,8 @@ class AudioAnalyzer:
             )
             self._stream.start()
 
-            device_info = sd.query_devices(AUDIO_DEVICE, 'input') if AUDIO_DEVICE else sd.query_devices(kind='input')
-            print(f"Audio analyzer started on: {device_info['name']}")
+            device_info = sd.query_devices(AUDIO_DEVICE, 'input') if AUDIO_DEVICE is not None else sd.query_devices(kind='input')
+            print(f"Audio analyzer started on device {AUDIO_DEVICE}: {device_info['name']}")
 
             self._thread = threading.Thread(target=self._analysis_loop, daemon=True)
             self._thread.start()
