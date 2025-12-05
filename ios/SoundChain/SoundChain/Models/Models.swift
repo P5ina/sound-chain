@@ -94,7 +94,16 @@ struct LeaderboardEntry: Codable, Identifiable, Equatable {
 
 struct MiningStatus: Codable, Equatable {
     let contributions: [String: Double]
-    let target: Double
+    let target: Double?  // nil when no pending transactions
     let current: Double
     let tolerance: Double
+    let pendingTx: Int
+
+    enum CodingKeys: String, CodingKey {
+        case contributions
+        case target
+        case current
+        case tolerance
+        case pendingTx = "pending_tx"
+    }
 }

@@ -69,39 +69,60 @@ struct MiningView: View {
                 .font(.headline)
 
             if let status = appState.miningStatus {
-                VStack(spacing: 16) {
-                    HStack {
-                        Text("Target")
-                        Spacer()
-                        Text("\(Int(status.target * 100))%")
-                            .fontWeight(.medium)
+                if let target = status.target {
+                    // Has pending transactions - show mining target
+                    VStack(spacing: 16) {
+                        HStack {
+                            Text("Target")
+                            Spacer()
+                            Text("\(Int(target * 100))%")
+                                .fontWeight(.medium)
+                        }
+
+                        ProgressView(value: status.current, total: 1.0)
+                            .tint(progressColor(current: status.current, target: target, tolerance: status.tolerance))
+
+                        HStack {
+                            Text("Current: \(Int(status.current * 100))%")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            Spacer()
+
+                            Text("Tolerance: ±\(Int(status.tolerance * 100))%")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if abs(status.current - target) <= status.tolerance {
+                            Label("In range - Block mining!", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                                .font(.subheadline)
+                        }
                     }
+                    .padding()
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                } else {
+                    // No pending transactions
+                    VStack(spacing: 8) {
+                        Image(systemName: "clock.badge.questionmark")
+                            .font(.largeTitle)
+                            .foregroundStyle(.orange)
 
-                    ProgressView(value: status.current, total: 1.0)
-                        .tint(progressColor(current: status.current, target: status.target, tolerance: status.tolerance))
+                        Text("Waiting for transactions")
+                            .font(.headline)
 
-                    HStack {
-                        Text("Current: \(Int(status.current * 100))%")
+                        Text("Users need to send coins to create transactions for mining")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-
-                        Spacer()
-
-                        Text("Tolerance: ±\(Int(status.tolerance * 100))%")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
                     }
-
-                    if abs(status.current - status.target) <= status.tolerance {
-                        Label("In range - Block mining!", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                            .font(.subheadline)
-                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                 }
-                .padding()
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
             } else {
-                Text("Waiting for mining data...")
+                Text("Connecting...")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)

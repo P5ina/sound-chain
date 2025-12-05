@@ -16,6 +16,7 @@ TOLERANCE_STEP = 0.01
 
 # Transactions
 MIN_FEE = 0.01
+INITIAL_BALANCE = 100.0  # Starting balance for new users
 
 # Server
 WEBSOCKET_HOST = "0.0.0.0"

@@ -5,7 +5,7 @@ import uuid
 from dataclasses import dataclass, field, asdict
 from typing import Optional
 
-from config import INITIAL_REWARD, HALVING_INTERVAL, MIN_FEE
+from config import INITIAL_REWARD, HALVING_INTERVAL, MIN_FEE, INITIAL_BALANCE
 
 
 @dataclass
@@ -135,9 +135,24 @@ class Blockchain:
     def get_total_fees(self) -> float:
         return sum(tx.fee for tx in self.pending_transactions)
 
+    def get_target_from_transactions(self) -> Optional[float]:
+        """Calculate mining target (0.3-0.7) from pending transaction hashes"""
+        if not self.pending_transactions:
+            return None
+
+        # Combine all transaction IDs
+        combined = "".join(tx.tx_id for tx in self.pending_transactions)
+        hash_bytes = hashlib.sha256(combined.encode()).digest()
+
+        # Use first 4 bytes to get a number 0-1
+        value = int.from_bytes(hash_bytes[:4], 'big') / (2**32)
+
+        # Scale to 0.3-0.7 range
+        return 0.3 + value * 0.4
+
     def create_user(self, name: str) -> User:
         user_id = str(uuid.uuid4())
-        wallet = Wallet(address=user_id)
+        wallet = Wallet(address=user_id, balance=INITIAL_BALANCE)
         user = User(user_id=user_id, name=name, wallet=wallet)
         self.users[user_id] = user
         return user

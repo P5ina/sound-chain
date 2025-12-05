@@ -29,7 +29,6 @@ class SoundChainServer:
         self.buzzer = Buzzer(BUZZER_PIN)
         self.connections: dict[str, WebSocketServerProtocol] = {}
         self.tolerance = INITIAL_TOLERANCE
-        self.target: float = 0.5  # Target sound level (0-1)
         self._running = False
 
     async def send_to_user(self, user_id: str, message: dict):
@@ -147,6 +146,9 @@ class SoundChainServer:
         if not miners:
             return
 
+        # Get target from pending transactions
+        target = self.blockchain.get_target_from_transactions()
+
         # Get active miners mapping (user_id -> frequency)
         active_miners = {m.user_id: m.frequency for m in miners if m.frequency}
         contributions = self.audio.get_contributions(active_miners)
@@ -157,9 +159,10 @@ class SoundChainServer:
         status = {
             "type": "mining_status",
             "contributions": contributions,
-            "target": self.target,
+            "target": target,  # None if no pending transactions
             "current": current_level,
             "tolerance": self.tolerance,
+            "pending_tx": len(self.blockchain.pending_transactions),
         }
 
         # Send to all miners
@@ -167,23 +170,25 @@ class SoundChainServer:
             await self.send_to_user(miner.user_id, status)
 
     def check_block_mined(self) -> bool:
+        # Must have pending transactions to mine
+        target = self.blockchain.get_target_from_transactions()
+        if target is None:
+            return False
+
         miners = self.blockchain.get_miners()
         if not miners:
             return False
+
         active_miners = {m.user_id: m.frequency for m in miners if m.frequency}
         contributions = self.audio.get_contributions(active_miners)
         current = sum(contributions.values())
-        return abs(current - self.target) <= self.tolerance
+        return abs(current - target) <= self.tolerance
 
     def adjust_difficulty(self, block_time: float):
         if block_time < FAST_BLOCK_THRESHOLD:
             self.tolerance = max(MIN_TOLERANCE, self.tolerance - TOLERANCE_STEP)
         elif block_time > SLOW_BLOCK_THRESHOLD:
             self.tolerance = min(MAX_TOLERANCE, self.tolerance + TOLERANCE_STEP)
-
-        # Generate new random target
-        import random
-        self.target = random.uniform(0.3, 0.7)
 
     async def mine_block_if_ready(self):
         miners = self.blockchain.get_miners()
