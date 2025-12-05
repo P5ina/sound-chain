@@ -77,9 +77,14 @@
 ```bash
 # Клонировать репозиторий
 git clone https://github.com/p5ina/sound-chain.git
-cd server
+cd sound-chain/server
+
+# Создать виртуальное окружение с доступом к системным пакетам (для GPIO)
+python3 -m venv --system-site-packages venv
+source venv/bin/activate
 
 # Установить зависимости
+sudo apt install libportaudio2  # для аудио
 pip install -r requirements.txt
 
 # Проверить микрофон
@@ -87,6 +92,27 @@ arecord -l
 
 # Запустить сервер
 python main.py
+```
+
+### Запуск как systemd сервис
+
+Для автоматического запуска при включении Pi:
+
+```bash
+# Установить сервис
+sudo cp soundchain.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable soundchain
+sudo systemctl start soundchain
+```
+
+**Команды управления:**
+
+```bash
+sudo systemctl status soundchain   # Статус
+sudo systemctl restart soundchain  # Перезапуск
+sudo systemctl stop soundchain     # Остановить
+sudo journalctl -u soundchain -f   # Логи в реальном времени
 ```
 
 ### iOS клиент
