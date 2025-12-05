@@ -67,8 +67,8 @@ class AudioAnalyzer:
                     )
                     if np.any(mask):
                         power = np.max(fft_result[mask])
-                        # Normalize to 0-1 range (very sensitive)
-                        normalized = min(1.0, power / 2.0)
+                        # Normalize to 0-1 range (ultra sensitive)
+                        normalized = min(1.0, power / 0.5)
                         self.contributions[freq] = normalized
                         total += normalized
                     else:

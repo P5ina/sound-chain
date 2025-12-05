@@ -7,7 +7,6 @@ import SwiftUI
 
 struct MiningView: View {
     @EnvironmentObject var appState: AppState
-    @State private var amplitude: Double = 0.5
 
     var body: some View {
         ScrollView {
@@ -118,25 +117,12 @@ struct MiningView: View {
                 .font(.headline)
 
             VStack(spacing: 16) {
-                HStack {
-                    Text("Volume")
-                    Spacer()
-                    Text("\(Int(amplitude * 100))%")
-                        .foregroundStyle(.secondary)
-                }
-
-                Slider(value: $amplitude, in: 0...1)
-                    .tint(.blue)
-                    .onChange(of: amplitude) { _, newValue in
-                        appState.setToneAmplitude(newValue)
-                    }
-
                 HStack(spacing: 16) {
                     Button {
                         if appState.isTonePlaying {
                             appState.stopTone()
                         } else {
-                            appState.startTone(amplitude: amplitude)
+                            appState.startTone()
                         }
                     } label: {
                         Label(
