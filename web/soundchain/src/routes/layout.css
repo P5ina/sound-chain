@@ -1,0 +1,42 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+html,
+body {
+	height: 100%;
+	overflow-x: hidden;
+}
+
+body {
+	background: linear-gradient(135deg, #1a1a2e 0%, #4a1942 50%, #1a1a2e 100%);
+	min-height: 100vh;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+	width: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #4a5568;
+	border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #718096;
+}
+
+/* Input number spinner hide */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input[type='number'] {
+	-moz-appearance: textfield;
+}

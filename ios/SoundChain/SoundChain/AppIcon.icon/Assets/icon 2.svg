@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Outer coin circle -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="white" stroke-width="32"/>
+
+  <!-- Speaker and waves inside the coin -->
+  <g fill="none" stroke="white" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Speaker cone -->
+    <polygon points="120,210 120,302 180,350 180,162"/>
+
+    <!-- Sound waves -->
+    <path d="M 220 180 C 270 220, 270 292, 220 332"/>
+    <path d="M 280 140 C 350 200, 350 312, 280 372"/>
+    <path d="M 340 100 C 440 190, 440 322, 340 412"/>
+  </g>
+</svg>
