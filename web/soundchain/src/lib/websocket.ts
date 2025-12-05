@@ -20,7 +20,9 @@ export class WebSocketClient {
 	connect(host: string): Promise<void> {
 		return new Promise((resolve, reject) => {
 			try {
-				this.url = `ws://${host}`;
+				// Use wss:// for HTTPS pages, ws:// for HTTP
+				const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws';
+				this.url = `${protocol}://${host}`;
 				this.socket = new WebSocket(this.url);
 
 				this.socket.onopen = () => {
@@ -59,7 +61,9 @@ export class WebSocketClient {
 			this.reconnectAttempts++;
 			setTimeout(() => {
 				console.log(`Reconnecting... attempt ${this.reconnectAttempts}`);
-				this.connect(this.url.replace('ws://', '')).catch(() => {
+				// Strip protocol prefix for reconnection
+				const host = this.url.replace(/^wss?:\/\//, '');
+				this.connect(host).catch(() => {
 					// Will retry on close
 				});
 			}, this.reconnectDelay * this.reconnectAttempts);

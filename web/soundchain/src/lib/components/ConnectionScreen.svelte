@@ -1,10 +1,23 @@
 <script lang="ts">
 	import { getAppState } from '$lib/store.svelte';
+	import { browser } from '$app/environment';
 
 	const app = getAppState();
 
+	// Auto-detect local server: if served from the Pi, use its hostname
+	function getDefaultHost(): string {
+		if (browser) {
+			const hostname = window.location.hostname;
+			// If running locally (not on Vercel), use the current host
+			if (hostname !== 'localhost' && !hostname.includes('vercel.app')) {
+				return `${hostname}:8765`;
+			}
+		}
+		return 'raspberrypi.local:8765';
+	}
+
 	let name = $state('');
-	let host = $state('raspberrypi.local:8765');
+	let host = $state(getDefaultHost());
 	let showAdvanced = $state(false);
 
 	async function handleConnect() {

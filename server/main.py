@@ -1,7 +1,10 @@
 import asyncio
 import json
 import time
+import os
 from typing import Optional
+from http.server import SimpleHTTPRequestHandler
+from functools import partial
 
 import websockets
 from websockets.server import WebSocketServerProtocol
@@ -24,6 +27,10 @@ from config import (
     TARGET_DRIFT_SPEED,
     TARGET_DRIFT_RANGE,
 )
+
+# Static files directory (relative to server directory)
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "web", "soundchain", "build")
+HTTP_PORT = 8080
 
 
 class SoundChainServer:
@@ -290,13 +297,51 @@ class SoundChainServer:
 
         mining_task = asyncio.create_task(self.mining_loop())
 
+        # Start HTTP server for static files
+        http_task = None
+        if os.path.exists(STATIC_DIR):
+            http_task = asyncio.create_task(self.start_http_server())
+            print(f"Web UI available at http://{WEBSOCKET_HOST}:{HTTP_PORT}")
+        else:
+            print(f"Static files not found at {STATIC_DIR}, skipping HTTP server")
+
         print(f"SoundChain server starting on ws://{WEBSOCKET_HOST}:{WEBSOCKET_PORT}")
         async with websockets.serve(self.handle_connection, WEBSOCKET_HOST, WEBSOCKET_PORT):
             await asyncio.Future()  # Run forever
 
         mining_task.cancel()
+        if http_task:
+            http_task.cancel()
         self.audio.stop()
         self.buzzer.cleanup()
+
+    async def start_http_server(self):
+        """Start a simple HTTP server for static files using standard library."""
+        import http.server
+        import socketserver
+
+        class SPAHandler(http.server.SimpleHTTPRequestHandler):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, directory=STATIC_DIR, **kwargs)
+
+            def do_GET(self):
+                # SPA fallback: serve index.html for non-existent paths
+                path = self.translate_path(self.path)
+                if not os.path.exists(path) or os.path.isdir(path) and not os.path.exists(os.path.join(path, 'index.html')):
+                    self.path = '/index.html'
+                return super().do_GET()
+
+            def log_message(self, format, *args):
+                pass  # Suppress logging
+
+        def run_server():
+            with socketserver.TCPServer((WEBSOCKET_HOST, HTTP_PORT), SPAHandler) as httpd:
+                httpd.serve_forever()
+
+        # Run in a thread to not block asyncio
+        import threading
+        thread = threading.Thread(target=run_server, daemon=True)
+        thread.start()
 
 
 async def main():
