@@ -265,8 +265,15 @@ async function toggleTone(): Promise<void> {
 		toneGenerator.stop();
 		isPlayingTone = false;
 	} else {
-		await toneGenerator.play(minerFrequency);
-		isPlayingTone = true;
+		const success = await toneGenerator.play(minerFrequency);
+		if (success) {
+			isPlayingTone = true;
+		} else {
+			errorMessage = 'Failed to play audio. Please check your device volume and try again.';
+			setTimeout(() => {
+				errorMessage = null;
+			}, 5000);
+		}
 	}
 }
 
