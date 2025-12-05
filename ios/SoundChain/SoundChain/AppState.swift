@@ -46,14 +46,20 @@ class AppState: ObservableObject {
     var serverHost: String = "raspberrypi.local"
     var serverPort: Int = 8765
 
+    var allUsers: [User] {
+        let users = gameState?.users ?? []
+        let miners = gameState?.miners ?? []
+        return users + miners
+    }
+
     var currentUser: User? {
         guard let userId = userId else { return nil }
-        return gameState?.users.first { $0.id == userId }
+        return allUsers.first { $0.id == userId }
     }
 
     var otherUsers: [User] {
-        guard let userId = userId else { return gameState?.users ?? [] }
-        return gameState?.users.filter { $0.id != userId } ?? []
+        guard let userId = userId else { return allUsers }
+        return allUsers.filter { $0.id != userId }
     }
 
     var availableMinerSlots: Int {
@@ -176,7 +182,8 @@ extension AppState: WebSocketClientDelegate {
 
         case .state(let state):
             self.gameState = state
-            if let user = state.users.first(where: { $0.id == self.userId }) {
+            let allUsers = state.users + state.miners
+            if let user = allUsers.first(where: { $0.id == self.userId }) {
                 self.wallet = user.wallet
                 self.isMiner = user.isMiner
                 self.minerFrequency = user.frequency

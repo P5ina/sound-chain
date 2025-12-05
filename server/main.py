@@ -91,7 +91,7 @@ class SoundChainServer:
         amount = data.get("amount", 0)
         fee = data.get("fee", 0)
 
-        tx = self.blockchain.add_transaction(user_id, to_id, amount, fee)
+        tx, error = self.blockchain.add_transaction(user_id, to_id, amount, fee)
         if tx:
             await self.send_to_user(
                 user_id,
@@ -101,7 +101,7 @@ class SoundChainServer:
         else:
             await self.send_to_user(
                 user_id,
-                {"type": "error", "message": "Transaction failed - insufficient funds or invalid recipient"},
+                {"type": "error", "message": f"Transaction failed: {error}"},
             )
 
     async def handle_message(self, ws: WebSocketServerProtocol, user_id: Optional[str], message: str) -> Optional[str]:

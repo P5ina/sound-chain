@@ -201,26 +201,33 @@ class Blockchain:
             self.release_miner_slot(user_id)
             del self.users[user_id]
 
-    def add_transaction(self, from_id: str, to_id: str, amount: float, fee: float) -> Optional[Transaction]:
+    def add_transaction(self, from_id: str, to_id: str, amount: float, fee: float) -> tuple[Optional[Transaction], Optional[str]]:
         sender = self.get_user(from_id)
         receiver = self.get_user(to_id)
 
-        if not sender or not receiver:
-            return None
+        if not sender:
+            return None, "Sender not found"
 
-        if sender.wallet.balance < amount + fee:
-            return None
+        if not receiver:
+            return None, "Recipient not found"
+
+        if amount <= 0:
+            return None, "Amount must be positive"
 
         if fee < MIN_FEE:
-            return None
+            return None, f"Fee too low (minimum: {MIN_FEE})"
+
+        total = amount + fee
+        if sender.wallet.balance < total:
+            return None, f"Insufficient funds (need {total:.2f}, have {sender.wallet.balance:.2f})"
 
         tx = Transaction.create(from_id, to_id, amount, fee)
 
         # Deduct immediately (pending state)
-        sender.wallet.balance -= amount + fee
+        sender.wallet.balance -= total
 
         self.pending_transactions.append(tx)
-        return tx
+        return tx, None
 
     def mine_block(self, contributions: dict[str, float]) -> Optional[Block]:
         if not contributions:
