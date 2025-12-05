@@ -8,6 +8,8 @@ from websockets.server import WebSocketServerProtocol
 
 from blockchain import Blockchain
 from audio import AudioAnalyzer, Buzzer
+import math
+
 from config import (
     WEBSOCKET_HOST,
     WEBSOCKET_PORT,
@@ -19,6 +21,8 @@ from config import (
     FAST_BLOCK_THRESHOLD,
     SLOW_BLOCK_THRESHOLD,
     BUZZER_PIN,
+    TARGET_DRIFT_SPEED,
+    TARGET_DRIFT_RANGE,
 )
 
 
@@ -30,6 +34,21 @@ class SoundChainServer:
         self.connections: dict[str, WebSocketServerProtocol] = {}
         self.tolerance = INITIAL_TOLERANCE
         self._running = False
+        self._drift_start_time = time.time()
+
+    def get_drifting_target(self) -> Optional[float]:
+        """Get target with sinusoidal drift over time - makes it much harder to hit."""
+        base_target = self.blockchain.get_target_from_transactions()
+        if base_target is None:
+            return None
+
+        # Calculate drift using sine wave for smooth oscillation
+        elapsed = time.time() - self._drift_start_time
+        drift = math.sin(elapsed * TARGET_DRIFT_SPEED * 2 * math.pi) * TARGET_DRIFT_RANGE
+
+        # Clamp to valid range 0.01-0.99
+        drifting_target = max(0.01, min(0.99, base_target + drift))
+        return drifting_target
 
     async def send_to_user(self, user_id: str, message: dict):
         if user_id in self.connections:
@@ -146,8 +165,8 @@ class SoundChainServer:
         if not miners:
             return
 
-        # Get target from pending transactions
-        target = self.blockchain.get_target_from_transactions()
+        # Get drifting target (moves over time!)
+        target = self.get_drifting_target()
 
         # Get active miners mapping (user_id -> frequency)
         active_miners = {m.user_id: m.frequency for m in miners if m.frequency}
@@ -171,7 +190,7 @@ class SoundChainServer:
 
     def check_block_mined(self) -> bool:
         # Must have pending transactions to mine
-        target = self.blockchain.get_target_from_transactions()
+        target = self.get_drifting_target()  # Use drifting target!
         if target is None:
             return False
 
@@ -210,6 +229,8 @@ class SoundChainServer:
         if block:
             block_time = time.time() - self.blockchain.block_start_time
             self.adjust_difficulty(block_time)
+            # Reset drift timer for next block
+            self._drift_start_time = time.time()
 
             # Buzz!
             self.buzzer.beep()

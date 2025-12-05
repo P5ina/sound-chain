@@ -65,8 +65,25 @@ struct MiningView: View {
 
     private var targetSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Mining Target")
-                .font(.headline)
+            HStack {
+                Text("Mining Target")
+                    .font(.headline)
+
+                Spacer()
+
+                // Drifting indicator
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.left.arrow.right")
+                        .font(.caption2)
+                    Text("DRIFTING")
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                }
+                .foregroundStyle(.orange)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.orange.opacity(0.2), in: Capsule())
+            }
 
             if let status = appState.miningStatus {
                 if let target = status.target {

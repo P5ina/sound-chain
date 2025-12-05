@@ -136,7 +136,11 @@ class Blockchain:
         return sum(tx.fee for tx in self.pending_transactions)
 
     def get_target_from_transactions(self) -> Optional[float]:
-        """Calculate mining target (0.3-0.7) from pending transaction hashes"""
+        """Calculate mining target (0.05-0.95) from pending transaction hashes.
+
+        Uses full range to require both very quiet and very loud sounds,
+        making it much harder to hit the target precisely.
+        """
         if not self.pending_transactions:
             return None
 
@@ -147,8 +151,8 @@ class Blockchain:
         # Use first 4 bytes to get a number 0-1
         value = int.from_bytes(hash_bytes[:4], 'big') / (2**32)
 
-        # Scale to 0.3-0.7 range
-        return 0.3 + value * 0.4
+        # Scale to 0.05-0.95 range (full range, very challenging)
+        return 0.05 + value * 0.9
 
     def create_user(self, name: str) -> User:
         user_id = str(uuid.uuid4())

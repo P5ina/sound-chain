@@ -5,9 +5,13 @@ MAX_MINERS = 4
 # Mining
 INITIAL_REWARD = 50.0
 HALVING_INTERVAL = 100
-INITIAL_TOLERANCE = 0.1
-MIN_TOLERANCE = 0.02
-MAX_TOLERANCE = 0.25
+INITIAL_TOLERANCE = 0.03  # Very tight tolerance to start
+MIN_TOLERANCE = 0.01      # Extremely precise required
+MAX_TOLERANCE = 0.08      # Even max is challenging
+
+# Target drift (moving target)
+TARGET_DRIFT_SPEED = 0.02  # How fast target drifts per second
+TARGET_DRIFT_RANGE = 0.15  # Max drift from base target
 
 # Difficulty adjustment
 FAST_BLOCK_THRESHOLD = 5.0  # seconds

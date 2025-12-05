@@ -92,7 +92,7 @@ function handleServerMessage(message: ServerMessage): void {
 
 		case 'state': {
 			const miners = (message.miners as Array<Record<string, unknown>>)?.map((m) => ({
-				id: m.id as string,
+				id: m.user_id as string,
 				name: m.name as string,
 				wallet: {
 					address: (m.wallet as Record<string, unknown>)?.address as string,
@@ -104,7 +104,7 @@ function handleServerMessage(message: ServerMessage): void {
 			})) || [];
 
 			const users = (message.users as Array<Record<string, unknown>>)?.map((u) => ({
-				id: u.id as string,
+				id: u.user_id as string,
 				name: u.name as string,
 				wallet: {
 					address: (u.wallet as Record<string, unknown>)?.address as string,

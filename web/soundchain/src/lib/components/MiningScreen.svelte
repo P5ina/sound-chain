@@ -66,7 +66,16 @@
 
 		<!-- Mining Target -->
 		<div class="mb-6 rounded-xl bg-gray-800/50 p-4">
-			<h2 class="mb-3 font-semibold text-white">Mining Target</h2>
+			<div class="mb-3 flex items-center justify-between">
+				<h2 class="font-semibold text-white">Mining Target</h2>
+				<span class="flex items-center gap-1 text-xs text-orange-400">
+					<svg class="h-3 w-3 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+						<path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z"/>
+						<path d="M10 5a1 1 0 011 1v3.586l2.707 2.707a1 1 0 01-1.414 1.414l-3-3A1 1 0 019 10V6a1 1 0 011-1z"/>
+					</svg>
+					DRIFTING
+				</span>
+			</div>
 
 			{#if app.miningStatus?.target !== null && app.miningStatus?.target !== undefined}
 				<div class="mb-4">
@@ -80,9 +89,9 @@
 							style="width: {getProgressPercentage()}%"
 						></div>
 
-						<!-- Target indicator -->
+						<!-- Target indicator (animated to show drift) -->
 						<div
-							class="absolute top-0 h-full w-1 bg-yellow-400"
+							class="absolute top-0 h-full w-1 bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)] transition-all duration-100"
 							style="left: {getTargetPosition()}%"
 						></div>
 
