@@ -23,9 +23,12 @@ export class WebSocketClient {
 				// Use wss:// for HTTPS pages, ws:// for HTTP
 				const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws';
 				this.url = `${protocol}://${host}`;
+				console.log(`[WebSocket] Attempting to connect to: ${this.url}`);
+				console.log(`[WebSocket] Page protocol: ${typeof window !== 'undefined' ? window.location.protocol : 'unknown'}`);
 				this.socket = new WebSocket(this.url);
 
 				this.socket.onopen = () => {
+					console.log(`[WebSocket] Connected successfully to ${this.url}`);
 					this.reconnectAttempts = 0;
 					this.connectHandlers.forEach((handler) => handler());
 					resolve();
@@ -36,21 +39,30 @@ export class WebSocketClient {
 						const message = JSON.parse(event.data) as ServerMessage;
 						this.messageHandlers.forEach((handler) => handler(message));
 					} catch (e) {
-						console.error('Failed to parse message:', e);
+						console.error('[WebSocket] Failed to parse message:', e);
 					}
 				};
 
-				this.socket.onclose = () => {
+				this.socket.onclose = (event) => {
+					console.log(`[WebSocket] Connection closed. Code: ${event.code}, Reason: ${event.reason || 'none'}, Clean: ${event.wasClean}`);
 					this.disconnectHandlers.forEach((handler) => handler());
 					this.attemptReconnect();
 				};
 
-				this.socket.onerror = () => {
-					const error = 'WebSocket connection error';
+				this.socket.onerror = (event) => {
+					const errorDetails = [
+						`URL: ${this.url}`,
+						`ReadyState: ${this.socket?.readyState}`,
+						`Protocol: ${protocol}`,
+						`Host: ${host}`
+					].join(', ');
+					console.error(`[WebSocket] Connection error. ${errorDetails}`, event);
+					const error = `WebSocket error connecting to ${this.url}. Check if server is running and accessible.`;
 					this.errorHandlers.forEach((handler) => handler(error));
 					reject(new Error(error));
 				};
 			} catch (e) {
+				console.error('[WebSocket] Exception during connect:', e);
 				reject(e);
 			}
 		});

@@ -221,8 +221,10 @@ async function connect(name: string, host: string): Promise<void> {
 		isConnected = true;
 		const deviceId = getOrCreateDeviceId();
 		wsClient.join(name, deviceId);
-	} catch {
-		connectionError = 'Failed to connect to server';
+	} catch (e) {
+		const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+		connectionError = `Failed to connect: ${errorMsg}`;
+		console.error('[Store] Connection failed:', e);
 		isConnected = false;
 	} finally {
 		isConnecting = false;
