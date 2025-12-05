@@ -277,7 +277,7 @@ class Blockchain:
             "chain_length": len(self.chain),
             "pending_tx": len(self.pending_transactions),
             "miners": [self.users[uid].to_dict() for uid in self.miner_slots if uid is not None],
-            "users": [u.to_dict() for u in self.users.values()],
+            "users": [u.to_dict() for u in self.users.values() if not u.is_miner],
             "block_reward": self.get_block_reward(),
             "pending_fees": self.get_total_fees(),
         }
