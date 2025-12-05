@@ -40,122 +40,117 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 pb-20 pt-4">
-	<div class="mx-auto max-w-md px-4">
+<div class="min-h-screen bg-[var(--ios-bg-secondary)] pb-24 pt-2">
+	<div class="mx-auto max-w-lg px-4">
 		<!-- Header -->
-		<h1 class="mb-6 text-xl font-bold text-white">Mining</h1>
+		<h1 class="mb-4 px-1 text-[28px] font-bold text-[var(--ios-text-primary)]">Mining</h1>
 
 		<!-- Frequency Card -->
-		<div
-			class="mb-6 rounded-2xl p-6 transition-all {app.isPlayingTone
-				? 'bg-gradient-to-br from-green-500 to-emerald-600'
-				: 'bg-gradient-to-br from-purple-500 to-pink-500'}"
-		>
-			<div class="flex items-center justify-between">
-				<div>
-					<p class="text-sm text-white/80">Your Frequency</p>
-					<p class="text-5xl font-bold text-white">{app.minerFrequency}</p>
-					<p class="text-lg text-white/80">Hz ({getFrequencyNote(app.minerFrequency || 0)})</p>
-				</div>
-				<div class="text-right">
-					<p class="text-sm text-white/80">Slot</p>
-					<p class="text-3xl font-bold text-white">#{app.minerSlot}</p>
+		<div class="ios-card mb-6 overflow-hidden">
+			<div
+				class="p-5 transition-colors {app.isPlayingTone
+					? 'bg-[var(--ios-green)]'
+					: 'bg-gradient-to-br from-[var(--ios-purple)] to-[var(--ios-pink)]'}"
+			>
+				<div class="flex items-start justify-between">
+					<div>
+						<p class="text-[13px] font-medium uppercase tracking-wide text-white/70">Your Frequency</p>
+						<p class="text-[48px] font-bold tracking-tight text-white">{app.minerFrequency}</p>
+						<p class="text-[17px] text-white/80">Hz ({getFrequencyNote(app.minerFrequency || 0)})</p>
+					</div>
+					<div class="text-right">
+						<p class="text-[13px] font-medium uppercase tracking-wide text-white/70">Slot</p>
+						<p class="text-[32px] font-bold text-white">#{app.minerSlot}</p>
+					</div>
 				</div>
 			</div>
 		</div>
 
 		<!-- Mining Target -->
-		<div class="mb-6 rounded-xl bg-gray-800/50 p-4">
-			<div class="mb-3 flex items-center justify-between">
-				<h2 class="font-semibold text-white">Mining Target</h2>
-				<span class="flex items-center gap-1 text-xs text-orange-400">
-					<svg class="h-3 w-3 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-						<path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z"/>
-						<path d="M10 5a1 1 0 011 1v3.586l2.707 2.707a1 1 0 01-1.414 1.414l-3-3A1 1 0 019 10V6a1 1 0 011-1z"/>
-					</svg>
+		<div class="mb-6">
+			<div class="mb-2 flex items-center justify-between px-4">
+				<h2 class="text-[13px] font-medium uppercase tracking-wide text-[var(--ios-text-tertiary)]">Mining Target</h2>
+				<span class="flex items-center gap-1 text-[13px] text-[var(--ios-orange)]">
+					<span class="h-2 w-2 animate-pulse rounded-full bg-[var(--ios-orange)]"></span>
 					DRIFTING
 				</span>
 			</div>
 
-			{#if app.miningStatus?.target !== null && app.miningStatus?.target !== undefined}
-				<div class="mb-4">
+			<div class="ios-card p-4">
+				{#if app.miningStatus?.target !== null && app.miningStatus?.target !== undefined}
 					<!-- Progress Bar -->
-					<div class="relative mb-2 h-8 overflow-hidden rounded-full bg-gray-700">
+					<div class="relative mb-3 h-10 overflow-hidden rounded-xl bg-[var(--ios-gray-5)]">
 						<!-- Current level -->
 						<div
 							class="absolute left-0 top-0 h-full transition-all duration-100 {isInTargetRange()
-								? 'bg-green-500'
-								: 'bg-purple-500'}"
+								? 'bg-[var(--ios-green)]'
+								: 'bg-[var(--ios-purple)]'}"
 							style="width: {getProgressPercentage()}%"
 						></div>
 
-						<!-- Target indicator (animated to show drift) -->
+						<!-- Target indicator -->
 						<div
-							class="absolute top-0 h-full w-1 bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)] transition-all duration-100"
+							class="absolute top-0 h-full w-1 bg-[var(--ios-orange)] shadow-[0_0_8px_rgba(255,149,0,0.6)] transition-all duration-100"
 							style="left: {getTargetPosition()}%"
 						></div>
 
 						<!-- Tolerance range -->
 						<div
-							class="absolute top-0 h-full bg-yellow-400/20"
+							class="absolute top-0 h-full bg-[var(--ios-orange)]/20"
 							style="left: {getTargetPosition() - (app.miningStatus?.tolerance || 0.05) * 100}%; width: {(app.miningStatus?.tolerance || 0.05) * 200}%"
 						></div>
 					</div>
 
-					<div class="flex justify-between text-sm">
-						<span class="text-gray-400">Current: {(app.miningStatus.current * 100).toFixed(1)}%</span>
-						<span class="text-yellow-400">Target: {(app.miningStatus.target * 100).toFixed(1)}%</span>
+					<div class="flex justify-between text-[15px]">
+						<span class="text-[var(--ios-text-tertiary)]">Current: {(app.miningStatus.current * 100).toFixed(1)}%</span>
+						<span class="text-[var(--ios-orange)]">Target: {(app.miningStatus.target * 100).toFixed(1)}%</span>
 					</div>
 
 					{#if isInTargetRange()}
-						<div class="mt-2 flex items-center gap-2 rounded-lg bg-green-500/20 p-2">
-							<svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<div class="mt-3 flex items-center gap-2 rounded-xl bg-[var(--ios-green)]/10 p-3">
+							<svg class="h-5 w-5 text-[var(--ios-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
 							</svg>
-							<span class="text-sm text-green-300">In valid range! Mining block...</span>
+							<span class="text-[15px] text-[var(--ios-green)]">In valid range! Mining block...</span>
 						</div>
 					{/if}
-				</div>
-			{:else}
-				<div class="flex items-center gap-2 rounded-lg bg-gray-700/50 p-4 text-center">
-					<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-					</svg>
-					<span class="text-gray-400">Waiting for transactions to mine...</span>
-				</div>
-			{/if}
+				{:else}
+					<div class="flex items-center justify-center gap-2 py-4">
+						<svg class="h-6 w-6 text-[var(--ios-text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+						</svg>
+						<span class="text-[15px] text-[var(--ios-text-tertiary)]">Waiting for transactions to mine...</span>
+					</div>
+				{/if}
+			</div>
 		</div>
 
 		<!-- Tone Control -->
 		<div class="mb-6 flex gap-3">
 			<button
 				onclick={() => app.toggleTone()}
-				class="flex-1 rounded-xl px-4 py-4 font-semibold text-white transition-all {app.isPlayingTone
-					? 'bg-red-500 hover:bg-red-600'
-					: 'bg-green-500 hover:bg-green-600'}"
+				class="flex flex-1 items-center justify-center gap-2 rounded-xl py-4 text-[17px] font-semibold text-white transition-colors {app.isPlayingTone
+					? 'bg-[var(--ios-red)]'
+					: 'bg-[var(--ios-green)]'}"
 			>
 				{#if app.isPlayingTone}
-					<span class="flex items-center justify-center gap-2">
-						<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-						</svg>
-						Stop Tone
-					</span>
+					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+					</svg>
+					Stop Tone
 				{:else}
-					<span class="flex items-center justify-center gap-2">
-						<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-						</svg>
-						Play Tone
-					</span>
+					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+					Play Tone
 				{/if}
 			</button>
 
 			<button
 				onclick={() => app.leaveMining()}
-				class="rounded-xl bg-gray-700 px-4 py-4 font-semibold text-white transition-all hover:bg-gray-600"
+				class="rounded-xl bg-[var(--ios-gray-5)] px-6 py-4 text-[17px] font-semibold text-[var(--ios-text-primary)] transition-colors active:bg-[var(--ios-gray-4)]"
 			>
 				Leave
 			</button>
@@ -163,45 +158,53 @@
 
 		<!-- Miner Contributions -->
 		{#if app.miningStatus && Object.keys(app.miningStatus.contributions).length > 0}
-			<div class="mb-6 rounded-xl bg-gray-800/50 p-4">
-				<h2 class="mb-3 font-semibold text-white">Miner Contributions</h2>
-				<div class="space-y-2">
-					{#each Object.entries(app.miningStatus.contributions) as [minerId, contribution]}
-						{@const miner = app.gameState.miners.find((m) => m.id === minerId)}
-						<div class="flex items-center justify-between">
-							<span class="text-sm text-gray-300">
-								{miner?.name || 'Unknown'}
-								{#if minerId === app.userId}
-									<span class="text-purple-400">(you)</span>
-								{/if}
-							</span>
-							<div class="flex items-center gap-2">
-								<div class="h-2 w-24 overflow-hidden rounded-full bg-gray-700">
-									<div
-										class="h-full bg-purple-500 transition-all"
-										style="width: {(contribution as number) * 100}%"
-									></div>
+			<div class="mb-6">
+				<h2 class="mb-2 px-4 text-[13px] font-medium uppercase tracking-wide text-[var(--ios-text-tertiary)]">
+					Contributions
+				</h2>
+				<div class="ios-card p-4">
+					<div class="space-y-3">
+						{#each Object.entries(app.miningStatus.contributions) as [minerId, contribution]}
+							{@const miner = app.gameState.miners.find((m) => m.id === minerId)}
+							<div class="flex items-center justify-between">
+								<span class="text-[15px] text-[var(--ios-text-primary)]">
+									{miner?.name || 'Unknown'}
+									{#if minerId === app.userId}
+										<span class="text-[var(--ios-blue)]"> (you)</span>
+									{/if}
+								</span>
+								<div class="flex items-center gap-3">
+									<div class="h-2 w-20 overflow-hidden rounded-full bg-[var(--ios-gray-5)]">
+										<div
+											class="h-full bg-[var(--ios-purple)] transition-all"
+											style="width: {(contribution as number) * 100}%"
+										></div>
+									</div>
+									<span class="w-10 text-right text-[15px] tabular-nums text-[var(--ios-text-secondary)]">{((contribution as number) * 100).toFixed(0)}%</span>
 								</div>
-								<span class="w-12 text-right text-sm text-white">{((contribution as number) * 100).toFixed(0)}%</span>
 							</div>
-						</div>
-					{/each}
+						{/each}
+					</div>
 				</div>
 			</div>
 		{/if}
 
 		<!-- Recent Blocks -->
 		{#if app.recentBlocks.length > 0}
-			<div class="rounded-xl bg-gray-800/50 p-4">
-				<h2 class="mb-3 font-semibold text-white">Recent Blocks</h2>
-				<div class="space-y-2">
+			<div>
+				<h2 class="mb-2 px-4 text-[13px] font-medium uppercase tracking-wide text-[var(--ios-text-tertiary)]">
+					Recent Blocks
+				</h2>
+				<div class="ios-list">
 					{#each app.recentBlocks as block}
-						<div class="rounded-lg bg-gray-700/50 p-3">
+						<div class="ios-list-item">
 							<div class="flex items-center justify-between">
-								<span class="font-medium text-white">Block #{block.index}</span>
-								<span class="text-sm text-green-400">+{formatBalance(block.totalReward)} coins</span>
+								<div>
+									<span class="text-[17px] font-medium text-[var(--ios-text-primary)]">Block #{block.index}</span>
+									<p class="text-[13px] text-[var(--ios-text-tertiary)]">{block.transactions.length} transaction(s)</p>
+								</div>
+								<span class="text-[17px] font-semibold text-[var(--ios-green)]">+{formatBalance(block.totalReward)}</span>
 							</div>
-							<p class="text-xs text-gray-400">{block.transactions.length} transaction(s)</p>
 						</div>
 					{/each}
 				</div>

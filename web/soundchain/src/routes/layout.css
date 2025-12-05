@@ -1,6 +1,47 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
+:root {
+	/* iOS System Colors */
+	--ios-blue: #007AFF;
+	--ios-green: #34C759;
+	--ios-red: #FF3B30;
+	--ios-orange: #FF9500;
+	--ios-yellow: #FFCC00;
+	--ios-purple: #AF52DE;
+	--ios-pink: #FF2D55;
+	--ios-teal: #5AC8FA;
+
+	/* iOS Gray Scale */
+	--ios-gray-1: #8E8E93;
+	--ios-gray-2: #AEAEB2;
+	--ios-gray-3: #C7C7CC;
+	--ios-gray-4: #D1D1D6;
+	--ios-gray-5: #E5E5EA;
+	--ios-gray-6: #F2F2F7;
+
+	/* iOS Background */
+	--ios-bg-primary: #FFFFFF;
+	--ios-bg-secondary: #F2F2F7;
+	--ios-bg-tertiary: #FFFFFF;
+
+	/* iOS Text */
+	--ios-text-primary: #000000;
+	--ios-text-secondary: #3C3C43;
+	--ios-text-tertiary: #8E8E93;
+
+	/* iOS Separator */
+	--ios-separator: rgba(60, 60, 67, 0.12);
+
+	/* Safe areas */
+	--safe-area-top: env(safe-area-inset-top, 0px);
+	--safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+	-webkit-tap-highlight-color: transparent;
+}
+
 html,
 body {
 	height: 100%;
@@ -8,26 +49,18 @@ body {
 }
 
 body {
-	background: linear-gradient(135deg, #1a1a2e 0%, #4a1942 50%, #1a1a2e 100%);
+	font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	background-color: var(--ios-bg-secondary);
+	color: var(--ios-text-primary);
 	min-height: 100vh;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
+/* iOS-style scrollbar (minimal) */
 ::-webkit-scrollbar {
-	width: 6px;
-}
-
-::-webkit-scrollbar-track {
+	width: 0px;
 	background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-	background: #4a5568;
-	border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-	background: #718096;
 }
 
 /* Input number spinner hide */
@@ -39,4 +72,88 @@ input[type='number']::-webkit-outer-spin-button {
 
 input[type='number'] {
 	-moz-appearance: textfield;
+}
+
+/* iOS-style focus */
+input:focus, button:focus {
+	outline: none;
+}
+
+/* iOS-style active state */
+.ios-pressable:active {
+	opacity: 0.7;
+	transform: scale(0.98);
+}
+
+/* iOS card style */
+.ios-card {
+	background: var(--ios-bg-tertiary);
+	border-radius: 12px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* iOS list style */
+.ios-list {
+	background: var(--ios-bg-tertiary);
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.ios-list-item {
+	padding: 12px 16px;
+	border-bottom: 0.5px solid var(--ios-separator);
+}
+
+.ios-list-item:last-child {
+	border-bottom: none;
+}
+
+/* iOS button styles */
+.ios-button-primary {
+	background: var(--ios-blue);
+	color: white;
+	border-radius: 12px;
+	font-weight: 600;
+	padding: 16px 24px;
+	transition: opacity 0.15s;
+}
+
+.ios-button-primary:active {
+	opacity: 0.8;
+}
+
+.ios-button-primary:disabled {
+	opacity: 0.4;
+}
+
+/* iOS input style */
+.ios-input {
+	background: var(--ios-bg-tertiary);
+	border: none;
+	border-radius: 10px;
+	padding: 12px 16px;
+	font-size: 17px;
+	width: 100%;
+	color: var(--ios-text-primary);
+}
+
+.ios-input::placeholder {
+	color: var(--ios-gray-2);
+}
+
+/* iOS Navigation Bar */
+.ios-navbar {
+	background: rgba(255, 255, 255, 0.85);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	border-bottom: 0.5px solid var(--ios-separator);
+}
+
+/* iOS Tab Bar */
+.ios-tabbar {
+	background: rgba(255, 255, 255, 0.85);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	border-top: 0.5px solid var(--ios-separator);
+	padding-bottom: var(--safe-area-bottom);
 }
