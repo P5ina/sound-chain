@@ -29,6 +29,8 @@ let userWallet = $state<Wallet | null>(null);
 let isMiner = $state(false);
 let minerFrequency = $state<number | null>(null);
 let minerSlot = $state<number | null>(null);
+let minFrequency = $state(300);
+let maxFrequency = $state(1200);
 let isPlayingTone = $state(false);
 
 // Game state
@@ -75,6 +77,8 @@ function handleServerMessage(message: ServerMessage): void {
 			isMiner = true;
 			minerFrequency = message.frequency as number;
 			minerSlot = message.slot as number;
+			minFrequency = (message.min_frequency as number) || 300;
+			maxFrequency = (message.max_frequency as number) || 1200;
 			wsClient.getState();
 			break;
 		}
@@ -132,12 +136,28 @@ function handleServerMessage(message: ServerMessage): void {
 		}
 
 		case 'mining_status': {
+			const rawContributions = message.contributions as Record<string, {
+				frequency: number;
+				detected: boolean;
+				accuracy: number;
+				contribution: number;
+			}> || {};
+
+			const rawTones = message.detected_tones as Array<{
+				frequency: number;
+				power: number;
+				purity: number;
+			}> || [];
+
 			miningStatus = {
-				contributions: message.contributions as Record<string, number> || {},
-				target: message.target as number | null,
-				current: message.current as number || 0,
-				tolerance: message.tolerance as number || 0.05,
-				pendingTx: message.pending_tx as number || 0
+				targetFrequency: message.target_frequency as number | null,
+				toleranceHz: message.tolerance_hz as number || 30,
+				contributions: rawContributions,
+				avgContribution: message.avg_contribution as number || 0,
+				detectedTones: rawTones,
+				pendingTx: message.pending_tx as number || 0,
+				minFrequency: message.min_frequency as number || 300,
+				maxFrequency: message.max_frequency as number || 1200
 			};
 			break;
 		}
@@ -270,6 +290,20 @@ async function toggleTone(): Promise<void> {
 	}
 }
 
+async function setFrequency(frequency: number): Promise<void> {
+	// Clamp to valid range
+	frequency = Math.max(minFrequency, Math.min(maxFrequency, frequency));
+	minerFrequency = frequency;
+
+	// Update tone if playing
+	if (isPlayingTone) {
+		await toneGenerator.play(frequency);
+	}
+
+	// Send to server
+	wsClient.setFrequency(frequency);
+}
+
 function sendCoins(toUserId: string, amount: number, fee: number): void {
 	wsClient.transfer(toUserId, amount, fee);
 }
@@ -327,6 +361,12 @@ export function getAppState() {
 		get minerSlot() {
 			return minerSlot;
 		},
+		get minFrequency() {
+			return minFrequency;
+		},
+		get maxFrequency() {
+			return maxFrequency;
+		},
 		get isPlayingTone() {
 			return isPlayingTone;
 		},
@@ -359,6 +399,7 @@ export function getAppState() {
 		becomeMiner,
 		leaveMining,
 		toggleTone,
+		setFrequency,
 		sendCoins,
 		refreshLeaderboard,
 		setScreen,

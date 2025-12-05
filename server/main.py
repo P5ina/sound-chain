@@ -17,15 +17,20 @@ from config import (
     WEBSOCKET_HOST,
     WEBSOCKET_PORT,
     TICK_RATE,
-    INITIAL_TOLERANCE,
-    MIN_TOLERANCE,
-    MAX_TOLERANCE,
-    TOLERANCE_STEP,
+    INITIAL_TOLERANCE_HZ,
+    MIN_TOLERANCE_HZ,
+    MAX_TOLERANCE_HZ,
+    TOLERANCE_STEP_HZ,
     FAST_BLOCK_THRESHOLD,
     SLOW_BLOCK_THRESHOLD,
     BUZZER_PIN,
+    TARGET_BASE_FREQUENCY,
     TARGET_DRIFT_SPEED,
     TARGET_DRIFT_RANGE,
+    MIN_MINER_FREQUENCY,
+    MAX_MINER_FREQUENCY,
+    DEFAULT_MINER_FREQUENCY,
+    MIN_CONTRIBUTION_THRESHOLD,
 )
 
 # Static files directory (relative to server directory)
@@ -39,23 +44,26 @@ class SoundChainServer:
         self.audio = AudioAnalyzer()
         self.buzzer = Buzzer(BUZZER_PIN)
         self.connections: dict[str, WebSocketServerProtocol] = {}
-        self.tolerance = INITIAL_TOLERANCE
+        self.tolerance_hz = INITIAL_TOLERANCE_HZ  # Hz tolerance for frequency matching
         self._running = False
         self._drift_start_time = time.time()
 
-    def get_drifting_target(self) -> Optional[float]:
-        """Get target with sinusoidal drift over time - makes it much harder to hit."""
-        base_target = self.blockchain.get_target_from_transactions()
-        if base_target is None:
+    def get_target_frequency(self) -> Optional[float]:
+        """Get target frequency with sinusoidal drift - miners try to match this frequency."""
+        # Only show target when there are pending transactions
+        if not self.blockchain.pending_transactions:
             return None
 
         # Calculate drift using sine wave for smooth oscillation
         elapsed = time.time() - self._drift_start_time
         drift = math.sin(elapsed * TARGET_DRIFT_SPEED * 2 * math.pi) * TARGET_DRIFT_RANGE
 
-        # Clamp to valid range 0.01-0.99
-        drifting_target = max(0.01, min(0.99, base_target + drift))
-        return drifting_target
+        # Target frequency drifts around base
+        target_freq = TARGET_BASE_FREQUENCY + drift
+
+        # Clamp to valid range
+        target_freq = max(MIN_MINER_FREQUENCY, min(MAX_MINER_FREQUENCY, target_freq))
+        return target_freq
 
     async def send_to_user(self, user_id: str, message: dict):
         if user_id in self.connections:
@@ -96,10 +104,18 @@ class SoundChainServer:
     async def handle_become_miner(self, user_id: str):
         result = self.blockchain.assign_miner_slot(user_id)
         if result:
-            slot, frequency = result
+            slot, _ = result  # We don't use fixed frequency anymore
+            # Set default frequency for this miner
+            self.audio.set_miner_frequency(user_id, DEFAULT_MINER_FREQUENCY)
             await self.send_to_user(
                 user_id,
-                {"type": "became_miner", "frequency": frequency, "slot": slot},
+                {
+                    "type": "became_miner",
+                    "frequency": DEFAULT_MINER_FREQUENCY,
+                    "slot": slot,
+                    "min_frequency": MIN_MINER_FREQUENCY,
+                    "max_frequency": MAX_MINER_FREQUENCY,
+                },
             )
             await self.broadcast_state()
         else:
@@ -108,8 +124,18 @@ class SoundChainServer:
                 {"type": "error", "message": "No miner slots available"},
             )
 
+    async def handle_set_frequency(self, user_id: str, data: dict):
+        """Handle miner changing their frequency via slider"""
+        frequency = data.get("frequency", DEFAULT_MINER_FREQUENCY)
+        # Clamp to valid range
+        frequency = max(MIN_MINER_FREQUENCY, min(MAX_MINER_FREQUENCY, frequency))
+        self.audio.set_miner_frequency(user_id, frequency)
+        # Update blockchain user record
+        self.blockchain.set_miner_frequency(user_id, frequency)
+
     async def handle_leave_mining(self, user_id: str):
         if self.blockchain.release_miner_slot(user_id):
+            self.audio.remove_miner(user_id)
             await self.send_to_user(user_id, {"type": "left_mining"})
             await self.broadcast_state()
 
@@ -146,6 +172,8 @@ class SoundChainServer:
                 await self.handle_become_miner(user_id)
             elif msg_type == "leave_mining":
                 await self.handle_leave_mining(user_id)
+            elif msg_type == "set_frequency":
+                await self.handle_set_frequency(user_id, data)
             elif msg_type == "transfer":
                 await self.handle_transfer(user_id, data)
             elif msg_type == "get_state":
@@ -173,23 +201,42 @@ class SoundChainServer:
         if not miners:
             return
 
-        # Get drifting target (moves over time!)
-        target = self.get_drifting_target()
+        # Get target frequency (drifts over time!)
+        target_freq = self.get_target_frequency()
 
-        # Get active miners mapping (user_id -> frequency)
-        active_miners = {m.user_id: m.frequency for m in miners if m.frequency}
-        contributions = self.audio.get_contributions(active_miners)
+        # Get contributions based on frequency matching
+        if target_freq is not None:
+            contributions = self.audio.get_miner_contributions(target_freq)
+        else:
+            contributions = {}
 
-        # Current level is sum of active miners' contributions
-        current_level = sum(contributions.values())
+        # Get detected tones for display
+        detected_tones = self.audio.get_detected_tones()
+
+        # Calculate average contribution
+        if contributions:
+            avg_contribution = sum(c['contribution'] for c in contributions.values()) / len(contributions)
+        else:
+            avg_contribution = 0.0
 
         status = {
             "type": "mining_status",
-            "contributions": contributions,
-            "target": target,  # None if no pending transactions
-            "current": current_level,
-            "tolerance": self.tolerance,
+            "target_frequency": target_freq,  # Hz, None if no pending transactions
+            "tolerance_hz": self.tolerance_hz,  # Hz tolerance for matching
+            "contributions": {
+                user_id: {
+                    "frequency": data["frequency"],
+                    "detected": data["detected"],
+                    "accuracy": data["accuracy"],
+                    "contribution": data["contribution"],
+                }
+                for user_id, data in contributions.items()
+            },
+            "avg_contribution": avg_contribution,
+            "detected_tones": [{"frequency": f, "power": p, "purity": r} for f, p, r in detected_tones],
             "pending_tx": len(self.blockchain.pending_transactions),
+            "min_frequency": MIN_MINER_FREQUENCY,
+            "max_frequency": MAX_MINER_FREQUENCY,
         }
 
         # Send to all miners
@@ -197,25 +244,34 @@ class SoundChainServer:
             await self.send_to_user(miner.user_id, status)
 
     def check_block_mined(self) -> bool:
-        # Must have pending transactions to mine
-        target = self.get_drifting_target()  # Use drifting target!
-        if target is None:
+        """Check if miners are matching the target frequency well enough to mine a block."""
+        target_freq = self.get_target_frequency()
+        if target_freq is None:
             return False
 
         miners = self.blockchain.get_miners()
         if not miners:
             return False
 
-        active_miners = {m.user_id: m.frequency for m in miners if m.frequency}
-        contributions = self.audio.get_contributions(active_miners)
-        current = sum(contributions.values())
-        return abs(current - target) <= self.tolerance
+        # Get contributions from frequency matching
+        contributions = self.audio.get_miner_contributions(target_freq)
+        if not contributions:
+            return False
+
+        # Calculate average contribution (accuracy * purity)
+        avg_contribution = sum(c['contribution'] for c in contributions.values()) / len(contributions)
+
+        # Need average contribution above threshold to mine
+        return avg_contribution >= MIN_CONTRIBUTION_THRESHOLD
 
     def adjust_difficulty(self, block_time: float):
+        """Adjust tolerance (in Hz) based on block time."""
         if block_time < FAST_BLOCK_THRESHOLD:
-            self.tolerance = max(MIN_TOLERANCE, self.tolerance - TOLERANCE_STEP)
+            # Blocks too fast - make it harder (smaller tolerance)
+            self.tolerance_hz = max(MIN_TOLERANCE_HZ, self.tolerance_hz - TOLERANCE_STEP_HZ)
         elif block_time > SLOW_BLOCK_THRESHOLD:
-            self.tolerance = min(MAX_TOLERANCE, self.tolerance + TOLERANCE_STEP)
+            # Blocks too slow - make it easier (larger tolerance)
+            self.tolerance_hz = min(MAX_TOLERANCE_HZ, self.tolerance_hz + TOLERANCE_STEP_HZ)
 
     async def mine_block_if_ready(self):
         miners = self.blockchain.get_miners()
@@ -225,12 +281,19 @@ class SoundChainServer:
         if not self.check_block_mined():
             return
 
-        # Get contributions
-        active_miners = {m.user_id: m.frequency for m in miners if m.frequency}
-        contributions = self.audio.get_contributions(active_miners)
+        # Get contributions from frequency matching
+        target_freq = self.get_target_frequency()
+        if target_freq is None:
+            return
+
+        contrib_data = self.audio.get_miner_contributions(target_freq)
+
+        # Convert to simple contribution dict for blockchain (user_id -> contribution score)
+        contributions = {user_id: data['contribution'] for user_id, data in contrib_data.items()}
 
         # Only mine if there's actual contribution
-        if sum(contributions.values()) < 0.1:
+        total_contrib = sum(contributions.values())
+        if total_contrib < 0.1:
             return
 
         block = self.blockchain.mine_block(contributions)

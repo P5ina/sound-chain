@@ -1,22 +1,30 @@
-# Miner frequencies (Hz)
-MINER_FREQUENCIES = [440, 587, 784, 1047]
+# Miner frequency range (Hz) - each miner picks a frequency in this range
+MIN_MINER_FREQUENCY = 300  # Hz
+MAX_MINER_FREQUENCY = 1200  # Hz
+DEFAULT_MINER_FREQUENCY = 440  # Hz - starting position for slider
 MAX_MINERS = 4
 
 # Mining
 INITIAL_REWARD = 50.0
 HALVING_INTERVAL = 100
-INITIAL_TOLERANCE = 0.03  # Very tight tolerance to start
-MIN_TOLERANCE = 0.01      # Extremely precise required
-MAX_TOLERANCE = 0.08      # Even max is challenging
 
-# Target drift (moving target)
-TARGET_DRIFT_SPEED = 0.02  # How fast target drifts per second
-TARGET_DRIFT_RANGE = 0.15  # Max drift from base target
+# Target frequency (Hz) - this is what miners try to match
+TARGET_BASE_FREQUENCY = 600  # Hz - base target frequency
+TARGET_DRIFT_SPEED = 0.05  # How fast target drifts per second (Hz per tick)
+TARGET_DRIFT_RANGE = 150  # Hz - max drift from base target
+
+# Difficulty (Hz tolerance for frequency matching)
+INITIAL_TOLERANCE_HZ = 30  # Hz - starting tolerance
+MIN_TOLERANCE_HZ = 10      # Hz - hardest difficulty
+MAX_TOLERANCE_HZ = 80      # Hz - easiest difficulty
+TOLERANCE_STEP_HZ = 5      # Hz
 
 # Difficulty adjustment
 FAST_BLOCK_THRESHOLD = 5.0  # seconds
 SLOW_BLOCK_THRESHOLD = 30.0  # seconds
-TOLERANCE_STEP = 0.01
+
+# Contribution threshold (0-1, need this average contribution to mine)
+MIN_CONTRIBUTION_THRESHOLD = 0.3
 
 # Transactions
 MIN_FEE = 0.01

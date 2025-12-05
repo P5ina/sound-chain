@@ -111,6 +111,10 @@ export class WebSocketClient {
 		this.send({ type: 'leave_mining' });
 	}
 
+	setFrequency(frequency: number): void {
+		this.send({ type: 'set_frequency', frequency });
+	}
+
 	transfer(to: string, amount: number, fee: number): void {
 		this.send({ type: 'transfer', to, amount, fee });
 	}

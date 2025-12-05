@@ -33,12 +33,28 @@ export interface Block {
 	hash: string;
 }
 
+export interface MinerContribution {
+	frequency: number;      // Current frequency the miner is playing (Hz)
+	detected: boolean;      // Whether their tone was detected
+	accuracy: number;       // How close to target (0-1)
+	contribution: number;   // Final contribution score (0-1)
+}
+
+export interface DetectedTone {
+	frequency: number;
+	power: number;
+	purity: number;
+}
+
 export interface MiningStatus {
-	contributions: Record<string, number>;
-	target: number | null;
-	current: number;
-	tolerance: number;
+	targetFrequency: number | null;  // Target frequency to match (Hz)
+	toleranceHz: number;             // Tolerance in Hz
+	contributions: Record<string, MinerContribution>;
+	avgContribution: number;         // Average contribution (0-1)
+	detectedTones: DetectedTone[];   // Pure tones detected by server
 	pendingTx: number;
+	minFrequency: number;            // Min slider value (Hz)
+	maxFrequency: number;            // Max slider value (Hz)
 }
 
 export interface LeaderboardEntry {

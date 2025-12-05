@@ -21,8 +21,15 @@ export class ToneGenerator {
 	}
 
 	async play(frequency: number): Promise<void> {
-		if (this.isPlaying) {
-			this.stop();
+		// If already playing, just update frequency smoothly
+		if (this.isPlaying && this.oscillator && this.audioContext) {
+			this.currentFrequency = frequency;
+			// Smooth frequency transition over 50ms
+			this.oscillator.frequency.linearRampToValueAtTime(
+				frequency,
+				this.audioContext.currentTime + 0.05
+			);
+			return;
 		}
 
 		await this.initAudioContext();

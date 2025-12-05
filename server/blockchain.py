@@ -6,7 +6,7 @@ import uuid
 from dataclasses import dataclass, field, asdict
 from typing import Optional
 
-from config import INITIAL_REWARD, HALVING_INTERVAL, MIN_FEE, INITIAL_BALANCE
+from config import INITIAL_REWARD, HALVING_INTERVAL, MIN_FEE, INITIAL_BALANCE, DEFAULT_MINER_FREQUENCY
 
 # Path for persisting user data
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -234,9 +234,8 @@ class Blockchain:
                 return i
         return None
 
-    def assign_miner_slot(self, user_id: str) -> Optional[tuple[int, int]]:
-        from config import MINER_FREQUENCIES
-
+    def assign_miner_slot(self, user_id: str) -> Optional[tuple[int, float]]:
+        """Assign a miner slot to a user. Returns (slot, default_frequency)."""
         user = self.get_user(user_id)
         if not user or user.is_miner:
             return None
@@ -247,9 +246,15 @@ class Blockchain:
 
         user.is_miner = True
         user.miner_slot = slot
-        user.frequency = MINER_FREQUENCIES[slot]
+        user.frequency = DEFAULT_MINER_FREQUENCY  # Miner controls their own frequency now
         self.miner_slots[slot] = user_id
         return (slot, user.frequency)
+
+    def set_miner_frequency(self, user_id: str, frequency: float):
+        """Update a miner's current frequency (from their slider control)."""
+        user = self.get_user(user_id)
+        if user and user.is_miner:
+            user.frequency = frequency
 
     def release_miner_slot(self, user_id: str) -> bool:
         user = self.get_user(user_id)
