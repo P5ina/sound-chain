@@ -125,20 +125,18 @@ struct MiningView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Slider(value: $amplitude, in: 0...1) { editing in
-                    if !editing {
-                        appState.setToneAmplitude(amplitude)
+                Slider(value: $amplitude, in: 0...1)
+                    .tint(.blue)
+                    .onChange(of: amplitude) { _, newValue in
+                        appState.setToneAmplitude(newValue)
                     }
-                }
-                .tint(.blue)
 
                 HStack(spacing: 16) {
                     Button {
                         if appState.isTonePlaying {
                             appState.stopTone()
                         } else {
-                            appState.startTone()
-                            appState.setToneAmplitude(amplitude)
+                            appState.startTone(amplitude: amplitude)
                         }
                     } label: {
                         Label(

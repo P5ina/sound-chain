@@ -102,9 +102,9 @@ class AppState: ObservableObject {
         webSocket?.getLeaderboard()
     }
 
-    func startTone() {
+    func startTone(amplitude: Double = 1.0) {
         guard let frequency = minerFrequency else { return }
-        toneGenerator.start(frequency: Double(frequency))
+        toneGenerator.start(frequency: Double(frequency), amplitude: amplitude)
         isTonePlaying = true
     }
 
