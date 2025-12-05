@@ -21,7 +21,7 @@ class AudioAnalyzer:
         self.chunk_size = CHUNK_SIZE
         self.fft_window = FFT_WINDOW
         self.frequencies = MINER_FREQUENCIES
-        self.frequency_bandwidth = 20  # Hz around each target frequency
+        self.frequency_bandwidth = 50  # Hz around each target frequency
 
         self._audio_queue: queue.Queue = queue.Queue()
         self._running = False
@@ -67,8 +67,8 @@ class AudioAnalyzer:
                     )
                     if np.any(mask):
                         power = np.max(fft_result[mask])
-                        # Normalize to 0-1 range (ultra sensitive)
-                        normalized = min(1.0, power / 0.5)
+                        # Normalize to 0-1 range
+                        normalized = min(1.0, power / 10.0)
                         self.contributions[freq] = normalized
                         total += normalized
                     else:
